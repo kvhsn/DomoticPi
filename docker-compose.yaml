@@ -1,89 +1,185 @@
-version: "3.7"
+version: "3"
 
 services:
-
   traefik:
-    image: "traefik:v2.4"
-    container_name: "traefik"
+    container_name: traefik
+    restart: unless-stopped
+    image: traefik
     command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
       - "--providers.docker=true"
       - "--providers.docker.exposedbydefault=false"
-      - "--entrypoints.web.address=:80"
-      - "--entrypoints.websecure.address=:443"
-      - "--entrypoints.dnsovertls.address=:853"
-      - "--entrypoints.dns.address=:53"
-      - "--entrypoints.udpdns.address=:53/udp"
-      - "--certificatesresolvers.mytlschallenge.acme.httpchallenge=true"
-      - "--certificatesresolvers.mytlschallenge.acme.httpchallenge.entrypoint=web"
-      - "--certificatesresolvers.mytlschallenge.acme.email=kevinhassan.pro@gmail.com"
-      - "--certificatesresolvers.mytlschallenge.acme.storage=/letsencrypt/acme.json"
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      - 53:53/udp
-      - 53:53
-      - 853:853
-      - 80:80
-      - 443:443
+      - "443:443"
+      - "80:80"
     volumes:
-      - "./letsencrypt:/letsencrypt"
+      - "./letsencrypt:/letsencrypt:rw"
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
-
-  transmission:
-    image: linuxserver/transmission:version-3.00-r2
-    container_name: transmission
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
-      - TRANSMISSION_WEB_HOME=/flood-for-transmission/
-      - USER=${TRANSMISSION_USERNAME}
-      - PASS=${TRANSMISSION_PASSWORD}
-    volumes:
-      - ./config:/config
-      - ${TRANSMISSION_DOWNLOAD_PATH}:/downloads
-      - ${TRANSMISSION_WATCH_PATH}:/watch
-    ports:
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
-    restart: unless-stopped
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.transmission.rule=Host(`transmission.example.com`)"
-      - "traefik.http.routers.transmission.entrypoints=websecure"
-      - "traefik.http.routers.transmission.tls.certresolver=mytlschallenge"
-  pihole:
-    image: pihole/pihole:v5.8.1
-    container_name: pihole
-    domainname: pihole.example.com
-    environment:
-      - PUID=1000
-      - PGID=1000
-      - TZ=Europe/Paris
-      - WEBPASSWORD=${PIHOLE_PASSWORD}
-      - VIRTUAL_HOST=pihole.example.com
-    volumes:
-      - ${PIHOLE_PATH}:/etc/pihole/
-      - ${PIHOLE_DNS_MASK_PATH}:/etc/dnsmasq.d/
-    dns:
-      - 127.0.0.1
-      - 1.1.1.1
-    cap_add:
-      - NET_ADMIN  
-    restart: unless-stopped
     labels:
       - traefik.enable=true
-      
-    ### Web UI (HTTP/HTTPS)
-      - traefik.http.routers.pihole-secure.entrypoints=websecure
-      - traefik.http.routers.pihole-secure.rule=Host(`pihole.example.com`)
-      - traefik.http.routers.pihole-secure.tls=true
-      - traefik.http.routers.pihole-secure.tls.certresolver=mytlschallenge
-      - traefik.http.routers.pihole-secure.service=pihole-web
-      - traefik.http.services.pihole-web.loadbalancer.server.port=80
-   
-    ### DNS-over-TLS (853 Traefik -> 53 Pi-hole)
-      - traefik.tcp.routers.pihole-dnsovertls.rule=HostSNI(`pihole.example.com`)
-      - traefik.tcp.routers.pihole-dnsovertls.entrypoints=dnsovertls
-      - traefik.tcp.routers.pihole-dnsovertls.tls.certresolver=mytlschallenge
-      - traefik.tcp.routers.pihole-dnsovertls.service=pihole
-      - traefik.tcp.services.pihole.loadbalancer.server.port=53
+      - traefik.http.routers.http-catchall.rule=HostRegexp(`{host:.+}`)
+      - traefik.http.routers.http-catchall.entrypoints=web
+      - traefik.http.routers.http-catchall.middlewares=redirect-to-https
+      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+      - traefik.http.services.traefik.loadbalancer.server.port=8080
+      - traefik.http.routers.default-catchall.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.default-catchall.entrypoints=web
+      - traefik.http.routers.default-catchall.service=default-catchall@internal
+      - traefik.http.services.default-catchall.loadbalancer.server.port=80
+      - traefik.http.services.default-catchall.loadbalancer.server.response.status=204
+      - traefik.http.services.default-catchall.loadbalancer.server.response.contenttype=text/plain
+    networks:
+      traefik-net:
+        ipv4_address: ${TRAEFIK_IP}
+  transmission:
+    container_name: transmission
+    restart: unless-stopped
+    image: linuxserver/transmission
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Europe/Paris
+      - USER=${TRANSMISSION_USER}
+      - PASS=${TRANSMISSION_PASS}
+      - WHITELIST=127.0.0.1,*.*.*.*
+    volumes:
+      - /data/usbshare/downloads:/downloads:rw
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.transmission.tls=true
+      - traefik.http.routers.transmission.rule=Host(`transmission.${DOMAIN}`)
+      - traefik.http.routers.transmission.entrypoints=websecure
+      - traefik.http.routers.transmission.tls.certresolver=myresolver
+      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
+      - traefik.http.routers.transmission.middlewares=redirect-https
+      - traefik.http.services.transmission.loadbalancer.server.port=9091
+    networks:
+      traefik-net:
+        ipv4_address: ${TRANSMISSION_IP}
+
+  emby:
+    container_name: emby
+    restart: unless-stopped
+    image: emby/embyserver_arm64v8
+    environment:
+      - TZ=Europe/Paris
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - ./emby:/config # Configuration directory
+      - /data/usbshare/Series:/mnt/share1 # Media directory
+      - /data/usbshare/Movies:/mnt/share2 # Media directory
+      - /data/usbshare/Manga:/mnt/share3 # Media directory
+      - /opt/vc/lib:/opt/vc/lib
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.emby.tls=true
+      - traefik.http.routers.emby.rule=Host(`emby.${DOMAIN}`)
+      - traefik.http.routers.emby.entrypoints=websecure
+      - traefik.http.routers.emby.tls.certresolver=myresolver
+      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
+      - traefik.http.routers.emby.middlewares=redirect-https
+      - traefik.http.services.emby.loadbalancer.server.port=8096
+    networks:
+      traefik-net:
+        ipv4_address: ${EMBY_IP}
+
+  samba:
+    restart: unless-stopped
+    container_name: samba
+    image: dperson/samba
+    environment:
+      TZ: "Europe/Paris"
+      RECYCLE: "False"
+      NMBD: "True"
+      WORKGROUP: "HOME"
+      WIDELINKS: "True"
+      USERID: 1000
+      GROUPID: 1000
+    ports:
+      - 137:137/udp
+      - 138:138/udp
+      - 139:139/tcp
+      - 445:445/tcp
+    tmpfs:
+      - /tmp
+
+    stdin_open: true
+    tty: true
+    volumes:
+      - /data/usbshare:/mnt:z
+    command: '-s "raspberrypi;/mnt;yes;no;yes" -u "${SAMBA_USER};${SAMBA_PASS}" -p'
+
+  homeassistant:
+    container_name: homeassistant
+    restart: unless-stopped
+    image: homeassistant/home-assistant:stable
+    privileged: true
+    environment:
+      - TZ=Europe/Paris
+    devices:
+      - /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0001-if00-port0:/dev/ttyUSB0
+    volumes:
+      - /dev:/dev
+      - /run/dbus:/run/dbus:ro
+      - ./homeassistant:/config
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.homeassistant.tls=true
+      - traefik.http.routers.homeassistant.rule=Host(`homeassistant.${DOMAIN}`)
+      - traefik.http.routers.homeassistant.entrypoints=websecure
+      - traefik.http.routers.homeassistant.tls.certresolver=myresolver
+      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
+      - traefik.http.routers.homeassistant.middlewares=redirect-https
+      - traefik.http.services.homeassistant.loadbalancer.server.port=8123
+    networks:
+      traefik-net:
+        ipv4_address: ${HOMEASSISTANT_IP}
+
+  mosquitto:
+    container_name: mosquitto
+    restart: unless-stopped
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - ./mosquitto/data:/mosquitto/data
+      - ./mosquitto/log:/mosquitto/log
+    networks:
+      traefik-net:
+        ipv4_address: ${MOSQUITTO_IP}
+
+  zigbee2mqtt:
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    container_name: zigbee2mqtt
+    image: ghcr.io/koenkk/zigbee2mqtt
+    volumes:
+      - ./zigbee2mqtt/data:/app/data
+      - /run/udev:/run/udev:ro
+    ports:
+      # Frontend port
+      - 8080:8080
+    environment:
+      - TZ=Europe/Paris
+    devices:
+      - /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0001-if00-port0:/dev/ttyUSB0
+    networks:
+      traefik-net:
+        ipv4_address: ${ZIGBEE2MQTT_IP}
+
+networks:
+  traefik-net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET}

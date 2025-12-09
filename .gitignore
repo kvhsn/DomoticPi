@@ -1,5 +1,6 @@
 .env
-letsencrypt/
-config/
-pihole/
-datadnsmasqd/
+emby  
+homeassistant  
+letsencrypt  
+mosquitto  
+zigbee2mqtt
