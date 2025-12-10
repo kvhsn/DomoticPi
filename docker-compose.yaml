@@ -205,3 +205,6 @@ networks:
     ipam:
       config:
         - subnet: ${NETWORK_SUBNET}
+
+volumes: 
+  grafana-storage: {}
