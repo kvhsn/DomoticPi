@@ -116,6 +116,27 @@ services:
       - /data/usbshare:/mnt:z
     command: '-s "raspberrypi;/mnt;yes;no;yes" -u "${SAMBA_USER};${SAMBA_PASS}" -p'
 
+  grafana:
+    container_name: grafana
+    image: grafana/grafana
+    restart: unless-stopped
+    ports:
+      - '3000:3000'
+    volumes:
+      - grafana-storage:/var/lib/grafana
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.grafana.tls=true
+      - traefik.http.routers.grafana.rule=Host(`grafana.${DOMAIN}`)
+      - traefik.http.routers.grafana.entrypoints=websecure
+      - traefik.http.routers.grafana.tls.certresolver=myresolver
+      - traefik.http.middlewares.redirect-https.redirectscheme.scheme=https
+      - traefik.http.routers.grafana.middlewares=redirect-https
+      - traefik.http.services.grafana.loadbalancer.server.port=3000
+    networks:
+      traefik-net:
+        ipv4_address: ${GRAFANA_IP}
+
   homeassistant:
     container_name: homeassistant
     restart: unless-stopped
@@ -176,6 +197,7 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${ZIGBEE2MQTT_IP}
+
 
 networks:
   traefik-net:
