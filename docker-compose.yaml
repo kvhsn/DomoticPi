@@ -127,7 +127,7 @@ services:
       - influxdb_data:/var/lib/influxdb2
     networks:
       traefik-net:
-        ipv4_address: ${INFLUXDB_IP:-}
+        ipv4_address: ${INFLUXDB_IP}
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
@@ -236,6 +236,7 @@ services:
         ipv4_address: ${ZIGBEE2MQTT_IP}
   monitor:
     container_name: monitor
+    image: domoticpi-monitor
     build:
       context: ./monitor
       dockerfile: Dockerfile
@@ -247,7 +248,7 @@ services:
       - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - HOSTNAME=${HOSTNAME}
-      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-60}
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL}
       - ENABLE_CPU=true
       - ENABLE_MEMORY=true
       - ENABLE_DISK=true
@@ -265,14 +266,14 @@ services:
       - grafana
     networks:
       traefik-net:
-        ipv4_address: ${MONITOR_IP:-}
+        ipv4_address: ${MONITOR_IP}
 
 networks:
   traefik-net:
     driver: bridge
     ipam:
       config:
-        - subnet: ${NETWORK_SUBNET:-172.20.0.0/16}
+        - subnet: ${NETWORK_SUBNET}
 
 volumes:
   grafana-storage: {}
