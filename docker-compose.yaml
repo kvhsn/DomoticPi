@@ -40,8 +40,7 @@ services:
     restart: unless-stopped
     image: linuxserver/transmission
     depends_on:
-      traefik:
-        condition: service_started
+      - traefik
     environment:
       - PUID=1000
       - PGID=1000
@@ -69,8 +68,7 @@ services:
     restart: unless-stopped
     image: emby/embyserver_arm64v8
     depends_on:
-      traefik:
-        condition: service_started
+      - traefik
     environment:
       - TZ=Europe/Paris
       - PUID=1000
@@ -130,13 +128,6 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${INFLUXDB_IP:-}
-    healthcheck:
-      test:
-        ["CMD-SHELL", "wget --spider -q http://localhost:8086/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      start_period: 60s
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
@@ -177,10 +168,8 @@ services:
       traefik-net:
         ipv4_address: ${GRAFANA_IP}
     depends_on:
-      influxdb:
-        condition: service_healthy
-      traefik:
-        condition: service_started
+      - influxdb
+      - traefik
 
   homeassistant:
     container_name: homeassistant
@@ -190,10 +179,8 @@ services:
     environment:
       - TZ=Europe/Paris
     depends_on:
-      mosquitto:
-        condition: service_started
-      traefik:
-        condition: service_started
+      - mosquitto
+      - traefik
     devices:
       - /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0001-if00-port0:/dev/ttyUSB0
     volumes:
@@ -231,8 +218,7 @@ services:
   zigbee2mqtt:
     restart: unless-stopped
     depends_on:
-      mosquitto:
-        condition: service_started
+      - mosquitto
     container_name: zigbee2mqtt
     image: ghcr.io/koenkk/zigbee2mqtt
     volumes:
@@ -269,10 +255,8 @@ services:
       - /proc:/host/proc:ro
       - /sys:/host/sys:ro
     depends_on:
-      influxdb:
-        condition: service_healthy
-      grafana:
-        condition: service_healthy
+      - influxdb
+      - grafana
     networks:
       traefik-net:
         ipv4_address: ${MONITOR_IP:-}
