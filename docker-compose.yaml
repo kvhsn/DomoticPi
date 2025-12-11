@@ -131,7 +131,8 @@ services:
       traefik-net:
         ipv4_address: ${INFLUXDB_IP:-}
     healthcheck:
-      test: ["CMD", "influx", "ping"]
+      test:
+        ["CMD-SHELL", "wget --spider -q http://localhost:8086/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
