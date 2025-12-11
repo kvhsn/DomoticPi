@@ -247,7 +247,13 @@ services:
       - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - HOSTNAME=${HOSTNAME}
-      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL}
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL:-60}
+      - ENABLE_CPU=true
+      - ENABLE_MEMORY=true
+      - ENABLE_DISK=true
+      - ENABLE_TEMPERATURE=true
+      - ENABLE_NETWORK=true
+      - CPU_TEMP_PATH=/sys/class/thermal/thermal_zone0/temp
     devices:
       - /dev/gpiomem:/dev/gpiomem
     volumes:
