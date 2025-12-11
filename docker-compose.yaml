@@ -34,8 +34,6 @@ services:
       - traefik.http.routers.default-catchall.entrypoints=web
       - traefik.http.routers.default-catchall.service=default-catchall@internal
       - traefik.http.services.default-catchall.loadbalancer.server.port=80
-      - traefik.http.services.default-catchall.loadbalancer.server.response.status=204
-      - traefik.http.services.default-catchall.loadbalancer.server.response.contenttype=text/plain
     networks:
       traefik-net:
         ipv4_address: ${TRAEFIK_IP}
