@@ -3,6 +3,7 @@ services:
     container_name: traefik
     restart: unless-stopped
     image: traefik
+    stop_grace_period: 60s
     command:
       - "--log.level=DEBUG"
       - "--api.insecure=true"
@@ -10,6 +11,9 @@ services:
       - "--providers.docker.exposedbydefault=false"
       - --entrypoints.web.address=:80
       - --entrypoints.websecure.address=:443
+      - "--entrypoints.web.transport.lifeCycle.graceTimeOut=30s"
+      - "--entrypoints.websecure.transport.lifeCycle.graceTimeOut=30s"
+      - "--entrypoints.traefik.transport.lifeCycle.graceTimeOut=30s"
       - "--certificatesresolvers.myresolver.acme.tlschallenge=true"
       - "--certificatesresolvers.myresolver.acme.email=${ACME_EMAIL}"
       - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
@@ -249,12 +253,12 @@ services:
       - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
       - HOSTNAME=${HOSTNAME}
       - COLLECTION_INTERVAL=${COLLECTION_INTERVAL}
-      - ENABLE_CPU=true
-      - ENABLE_MEMORY=true
-      - ENABLE_DISK=true
-      - ENABLE_TEMPERATURE=true
-      - ENABLE_NETWORK=true
-      - CPU_TEMP_PATH=/sys/class/thermal/thermal_zone0/temp
+      - ENABLE_CPU=${ENABLE_CPU}
+      - ENABLE_MEMORY=${ENABLE_MEMORY}
+      - ENABLE_DISK=${ENABLE_DISK}
+      - ENABLE_TEMPERATURE=${ENABLE_TEMPERATURE}
+      - ENABLE_NETWORK=${ENABLE_NETWORK}
+      - CPU_TEMP_PATH=${CPU_TEMP_PATH}
     devices:
       - /dev/gpiomem:/dev/gpiomem
     volumes:
