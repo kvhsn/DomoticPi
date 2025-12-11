@@ -135,7 +135,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 10s
+      start_period: 60s
     environment:
       DOCKER_INFLUXDB_INIT_MODE: setup
       DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
@@ -143,6 +143,7 @@ services:
       DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
       DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
       DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
+      INFLUX_HOST: http://localhost:8086
 
   grafana:
     container_name: grafana
@@ -189,7 +190,7 @@ services:
       - TZ=Europe/Paris
     depends_on:
       mosquitto:
-        condition: service_healthy
+        condition: service_started
       traefik:
         condition: service_started
     devices:
@@ -222,16 +223,6 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "mosquitto_sub -h localhost -t '$$SYS/#' -C 1 | grep -v Error || exit 1",
-        ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 10s
     networks:
       traefik-net:
         ipv4_address: ${MOSQUITTO_IP}
@@ -240,7 +231,7 @@ services:
     restart: unless-stopped
     depends_on:
       mosquitto:
-        condition: service_healthy
+        condition: service_started
     container_name: zigbee2mqtt
     image: ghcr.io/koenkk/zigbee2mqtt
     volumes:
