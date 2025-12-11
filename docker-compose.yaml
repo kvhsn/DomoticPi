@@ -39,6 +39,9 @@ services:
     container_name: transmission
     restart: unless-stopped
     image: linuxserver/transmission
+    depends_on:
+      traefik:
+        condition: service_started
     environment:
       - PUID=1000
       - PGID=1000
@@ -65,6 +68,9 @@ services:
     container_name: emby
     restart: unless-stopped
     image: emby/embyserver_arm64v8
+    depends_on:
+      traefik:
+        condition: service_started
     environment:
       - TZ=Europe/Paris
       - PUID=1000
@@ -146,6 +152,16 @@ services:
       - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - traefik.enable=true
       - traefik.http.routers.grafana.tls=true
@@ -161,6 +177,8 @@ services:
     depends_on:
       influxdb:
         condition: service_healthy
+      traefik:
+        condition: service_started
 
   homeassistant:
     container_name: homeassistant
@@ -169,6 +187,11 @@ services:
     privileged: true
     environment:
       - TZ=Europe/Paris
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      traefik:
+        condition: service_started
     devices:
       - /dev/serial/by-id/usb-Silicon_Labs_Sonoff_Zigbee_3.0_USB_Dongle_Plus_0001-if00-port0:/dev/ttyUSB0
     volumes:
@@ -199,6 +222,16 @@ services:
       - ./mosquitto/config:/mosquitto/config
       - ./mosquitto/data:/mosquitto/data
       - ./mosquitto/log:/mosquitto/log
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "mosquitto_sub -h localhost -t '$$SYS/#' -C 1 | grep -v Error || exit 1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
     networks:
       traefik-net:
         ipv4_address: ${MOSQUITTO_IP}
@@ -206,7 +239,8 @@ services:
   zigbee2mqtt:
     restart: unless-stopped
     depends_on:
-      - mosquitto
+      mosquitto:
+        condition: service_healthy
     container_name: zigbee2mqtt
     image: ghcr.io/koenkk/zigbee2mqtt
     volumes:
@@ -246,7 +280,7 @@ services:
       influxdb:
         condition: service_healthy
       grafana:
-        condition: service_started
+        condition: service_healthy
     networks:
       traefik-net:
         ipv4_address: ${MONITOR_IP:-}
