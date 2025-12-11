@@ -8,7 +8,7 @@ import signal
 import sys
 from config import InfluxDBConfig, MonitoringConfig
 from metrics_collector import MetricsCollector
-from influxdb_client import InfluxDBWriter
+from influx_writer import InfluxDBWriter
 
 
 class MonitoringService:
