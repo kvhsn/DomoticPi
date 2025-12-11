@@ -115,13 +115,37 @@ services:
     volumes:
       - /data/usbshare:/mnt:z
     command: '-s "raspberrypi;/mnt;yes;no;yes" -u "${SAMBA_USER};${SAMBA_PASS}" -p'
+  influxdb:
+    container_name: influxdb
+    image: influxdb
+    restart: unless-stopped
+    ports:
+      - "8086:8086"
+    volumes:
+      - influxdb_data:/var/lib/influxdb2
+    networks:
+      traefik-net:
+        ipv4_address: ${INFLUXDB_IP:-}
+    healthcheck:
+      test: ["CMD", "influx", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    environment:
+      DOCKER_INFLUXDB_INIT_MODE: setup
+      DOCKER_INFLUXDB_INIT_USERNAME: ${INFLUXDB_USERNAME}
+      DOCKER_INFLUXDB_INIT_PASSWORD: ${INFLUXDB_PASSWORD}
+      DOCKER_INFLUXDB_INIT_ORG: ${INFLUXDB_ORG}
+      DOCKER_INFLUXDB_INIT_BUCKET: ${INFLUXDB_BUCKET}
+      DOCKER_INFLUXDB_INIT_ADMIN_TOKEN: ${INFLUXDB_TOKEN}
 
   grafana:
     container_name: grafana
     image: grafana/grafana
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - "3000:3000"
     volumes:
       - grafana-storage:/var/lib/grafana
     labels:
@@ -136,6 +160,9 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${GRAFANA_IP}
+    depends_on:
+      influxdb:
+        condition: service_healthy
 
   homeassistant:
     container_name: homeassistant
@@ -197,7 +224,34 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${ZIGBEE2MQTT_IP}
-
+  monitor:
+    container_name: monitor
+    build:
+      context: ./monitor
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    environment:
+      - TZ=Europe/Paris
+      - INFLUXDB_URL=http://influxdb:8086
+      - INFLUXDB_ORG=${INFLUXDB_ORG}
+      - INFLUXDB_BUCKET=${INFLUXDB_BUCKET}
+      - INFLUXDB_TOKEN=${INFLUXDB_TOKEN}
+      - HOSTNAME=${HOSTNAME}
+      - COLLECTION_INTERVAL=${COLLECTION_INTERVAL}
+    devices:
+      - /dev/gpiomem:/dev/gpiomem
+    volumes:
+      - /sys/class/thermal:/sys/class/thermal:ro
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+    depends_on:
+      influxdb:
+        condition: service_healthy
+      grafana:
+        condition: service_started
+    networks:
+      traefik-net:
+        ipv4_address: ${MONITOR_IP:-}
 
 networks:
   traefik-net:
@@ -206,5 +260,6 @@ networks:
       config:
         - subnet: ${NETWORK_SUBNET}
 
-volumes: 
+volumes:
   grafana-storage: {}
+  influxdb_data: {}

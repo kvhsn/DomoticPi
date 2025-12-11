@@ -165,6 +165,9 @@ Configure the following values in your `.env` file:
 | `HOMEASSISTANT_IP`        | Home Assistant IP                            | `x.x.x.x`                        |
 | `MOSQUITTO_IP`            | Mosquitto MQTT broker IP                     | `x.x.x.x`                        |
 | `ZIGBEE2MQTT_IP`          | Zigbee2MQTT bridge IP                        | `x.x.x.x`                        |
+| `GRAFANA_IP`              | Grafana visualization IP                     | `x.x.x.x`                        |
+| `INFLUXDB_IP`             | InfluxDB database IP                         | `x.x.x.x`                        |
+| `MONITOR_IP`              | Monitor service IP                           | `x.x.x.x`                        |
 | `NETWORK_SUBNET`          | Docker network subnet                        | `x.x.x.x/16`                     |
 | **Credentials**           | _Keep these secure_                          |                                  |
 | `TRANSMISSION_USER`       | Username for Transmission access             | `torrent_user`                   |
@@ -172,13 +175,12 @@ Configure the following values in your `.env` file:
 | `SAMBA_USER`              | Username for Samba file sharing              | `share_user`                     |
 | `SAMBA_PASS`              | Password for Samba file sharing              | `secure_password`                |
 
-### 3. Check permissions
+**Note:** For InfluxDB, Grafana, and Monitor configuration variables, see [monitor/README.md](monitor/README.md).
+
+### 3. Check USB mount point (if using external storage)
 
 ```bash
-# Adjust permissions for user 1000:1000
-sudo chown -R 1000:1000 emby homeassistant mosquitto zigbee2mqtt
-
-# Check USB mount point
+# Verify USB drive is mounted
 ls -la /data/usbshare
 ```
 
@@ -259,6 +261,10 @@ advanced:
   pan_id: GENERATE
 ```
 
+### Monitoring Stack (InfluxDB, Grafana, Monitor)
+
+For detailed setup instructions for InfluxDB, Grafana, and the Monitor Python script, see [monitor/README.md](monitor/README.md).
+
 ## 🚀 Usage
 
 ### Access Services
@@ -266,6 +272,8 @@ advanced:
 - **Transmission**: `https://transmission.yourdomain.com`
 - **Emby**: `https://emby.yourdomain.com`
 - **Home Assistant**: `https://homeassistant.yourdomain.com`
+- **Grafana**: `https://grafana.yourdomain.com` or `http://localhost:3000`
+- **InfluxDB**: `http://localhost:8086`
 - **Zigbee2MQTT**: `http://{SERVER_IP}:8080`
 - **Samba**: `\\{SERVER_IP}\raspberrypi`
 

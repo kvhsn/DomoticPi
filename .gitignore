@@ -5,3 +5,4 @@ letsencrypt
 mosquitto  
 zigbee2mqtt
 grafana-storage
+influxdb_data
