@@ -61,16 +61,9 @@ sudo crontab -l
 
 ### Home Assistant Configuration
 
-Add a sensor in Home Assistant to receive the MQTT data:
+The MQTT sensors are configured in [`configurations/homeassistant/configuration.yaml`](../configurations/homeassistant/configuration.yaml).
 
-```yaml
-mqtt:
-  sensor:
-    - name: "NAS Disk Usage"
-      state_topic: "homeassistant/sensor/nas/state"
-      value_template: "{{ value.split()[1] }}"
-      unit_of_measurement: "GB"
-```
+See the `mqtt.sensor` section for NAS disk sensors (`NAS Disk Total`, `NAS Disk Used`, `NAS Disk Free`).
 
 ### Files
 
@@ -144,43 +137,6 @@ sudo crontab -e
 
 ### Home Assistant Configuration
 
-Add MQTT sensors in Home Assistant to receive the metrics:
+The MQTT sensors are configured in [`configurations/homeassistant/configuration.yaml`](../configurations/homeassistant/configuration.yaml).
 
-```yaml
-mqtt:
-  sensor:
-    - name: "RPi CPU Temperature"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.cpu_temp }}"
-      unit_of_measurement: "°C"
-      device_class: temperature
-
-    - name: "RPi CPU Usage"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.cpu_usage }}"
-      unit_of_measurement: "%"
-
-    - name: "RPi RAM Usage"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.ram_usage_percent }}"
-      unit_of_measurement: "%"
-
-    - name: "RPi RAM Available"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.ram_available_mb }}"
-      unit_of_measurement: "MB"
-
-    - name: "RPi Disk Usage"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.disk_usage_percent | replace('%', '') }}"
-      unit_of_measurement: "%"
-
-    - name: "RPi Load Average"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ value_json.load_avg }}"
-
-    - name: "RPi Uptime"
-      state_topic: "homeassistant/sensor/rpi/state"
-      value_template: "{{ (value_json.uptime_seconds / 3600) | round(1) }}"
-      unit_of_measurement: "hours"
-```
+See the `mqtt.sensor` section for RPi sensors (`RPi CPU Temperature`, `RPi CPU Usage`, `RPi RAM Usage`, `RPi Disk Usage`, etc.).
