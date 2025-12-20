@@ -401,6 +401,12 @@ docker system prune -a
 df -h /data/usbshare
 ```
 
+## 📊 Scripts
+
+Utility scripts for monitoring and maintenance are available in the [`scripts/`](scripts/README.md) directory.
+
+- **NAS Disk Inspector** - Monitors disk space and reports to Home Assistant via MQTT
+
 ## 📝 Notes
 
 - Services use `Europe/Paris` timezone
