@@ -190,7 +190,7 @@ services:
       - N8N_ENCRYPTION_KEY=${N8N_ENCRYPTION_KEY}
       - NODE_ENV=production
     volumes:
-      - n8n_data:/home/node/.n8n
+      - ./n8n_data:/home/node/.n8n
     labels:
       - traefik.enable=true
       - traefik.http.routers.n8n.tls=true
