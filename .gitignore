@@ -4,3 +4,4 @@ homeassistant
 letsencrypt
 mosquitto
 zigbee2mqtt
+n8n_data
