@@ -251,6 +251,19 @@ SAMBA_PASS=yourPassword
 N8N_ENCRYPTION_KEY=your-32-character-encryption-key
 ```
 
+### n8n Encryption Key
+
+Generate a secure encryption key for n8n credentials storage using OpenSSL:
+
+```bash
+# Generate a 32-byte base64-encoded encryption key
+openssl rand -base64 32
+```
+
+Copy the output and set it as `N8N_ENCRYPTION_KEY` in your `.env` file.
+
+> **Important**: Keep this key safe! If you lose it, you won't be able to decrypt your stored credentials. Back it up securely.
+
 ### Mosquitto Configuration
 
 Create the file `mosquitto/config/mosquitto.conf`:
