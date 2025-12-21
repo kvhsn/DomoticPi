@@ -10,6 +10,7 @@ Docker infrastructure for home server based on Traefik, including media manageme
 - [Installation](#installation)
 - [Configuration](#configuration)
 - [Usage](#usage)
+- [Deployment](#deployment)
 - [Maintenance](#maintenance)
 - [Troubleshooting](#troubleshooting)
 
@@ -340,6 +341,38 @@ advanced:
    - **Webhook**: Receive external triggers
    - **HTTP Request**: Call external APIs
    - **MQTT**: Integrate with your Mosquitto broker
+
+## 🚀 Deployment
+
+This project supports automatic deployment to your Raspberry Pi using GitHub Actions.
+
+### Features
+
+- ✅ **Secure SSH Authentication**: Uses dedicated SSH key for GitHub Actions
+- ✅ **Restricted User**: Deployment user with minimal permissions
+- ✅ **Automatic Backups**: Creates backup before each deployment
+- ✅ **Rollback Capability**: Easy rollback to previous versions
+- ✅ **Health Checks**: Verifies services after deployment
+- ✅ **Zero Downtime**: Rolling updates when possible
+
+### Quick Start
+
+1. Follow the complete setup guide: **[📖 Deployment Setup Guide](docs/DEPLOYMENT_SETUP.md)**
+2. Configure GitHub Secrets (SSH key, host, user, path)
+3. Merge a PR to `main` branch
+4. Watch the automatic deployment in GitHub Actions
+
+### Manual Deployment
+
+You can also trigger a manual deployment:
+
+1. Go to `Actions` tab in GitHub
+2. Select "Deploy to Raspberry Pi" workflow
+3. Click "Run workflow"
+4. Select `main` branch
+5. Click "Run workflow"
+
+For detailed instructions, troubleshooting, and security best practices, see the [Deployment Setup Guide](docs/DEPLOYMENT_SETUP.md).
 
 ## 🔄 Maintenance
 
