@@ -182,8 +182,8 @@ services:
     restart: unless-stopped
     image: docker.n8n.io/n8nio/n8n
     environment:
-      - TZ=${GENERIC_TIMEZONE}
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
+      - TZ=Europe/Paris
+      - GENERIC_TIMEZONE=Europe/Paris
       - N8N_HOST=n8n.${DOMAIN}
       - N8N_PORT=5678
       - N8N_PROTOCOL=https
