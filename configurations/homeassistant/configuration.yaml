@@ -1,0 +1,90 @@
+
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - {{REPLACE_BY_TRAEFIK_IP}} 
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+mqtt:
+  sensor:
+    - name: "NAS Disk Total"
+      state_topic: "homeassistant/sensor/nas/state"
+      unit_of_measurement: "Go"
+      value_template: "{{ value.split()[0].replace('G', '') | int }}"
+
+    - name: "NAS Disk Used"
+      state_topic: "homeassistant/sensor/nas/state"
+      unit_of_measurement: "Go"
+      value_template: "{{ value.split()[1].replace('G', '') | int }}"
+
+    - name: "NAS Disk Free"
+      state_topic: "homeassistant/sensor/nas/state"
+      unit_of_measurement: "Go"
+      value_template: "{{ value.split()[2].replace('G', '') | int }}"
+
+    # Raspberry Pi Metrics
+    - name: "RPi CPU Temperature"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.cpu_temp }}"
+      unit_of_measurement: "°C"
+      device_class: temperature
+
+    - name: "RPi CPU Usage"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.cpu_usage }}"
+      unit_of_measurement: "%"
+
+    - name: "RPi RAM Total"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.ram_total_mb }}"
+      unit_of_measurement: "MB"
+
+    - name: "RPi RAM Used"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.ram_used_mb }}"
+      unit_of_measurement: "MB"
+
+    - name: "RPi RAM Available"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.ram_available_mb }}"
+      unit_of_measurement: "MB"
+
+    - name: "RPi RAM Usage"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.ram_usage_percent }}"
+      unit_of_measurement: "%"
+
+    - name: "RPi Disk Usage"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.disk_usage_percent | replace('%', '') }}"
+      unit_of_measurement: "%"
+
+    - name: "RPi Load Average"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ value_json.load_avg }}"
+
+    - name: "RPi Uptime"
+      state_topic: "homeassistant/sensor/rpi/state"
+      value_template: "{{ (value_json.uptime_seconds / 3600) | round(1) }}"
+      unit_of_measurement: "hours"
+template:
+  - sensor:
+      - name: "NAS Disk Used Percentage"
+        unit_of_measurement: "%"
+        state: >
+          {% set used = states('sensor.nas_disk_used') | int %}
+          {% set total = states('sensor.nas_disk_total') | int %}
+          {% if total > 0 %}
+            {{ (used / total * 100) | round(1) }}
+          {% else %}
+            0
+          {% endif %}
