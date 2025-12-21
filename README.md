@@ -155,7 +155,7 @@ Internal Network (${NETWORK_SUBNET})
 mkdir ~/home-server && cd ~/home-server
 
 # Create configuration directories
-mkdir -p letsencrypt emby homeassistant mosquitto/{config,data,log} zigbee2mqtt/data n8n
+mkdir -p letsencrypt emby homeassistant mosquitto/{config,data,log} zigbee2mqtt/data
 ```
 
 ### 2. Create the .env file
@@ -196,7 +196,7 @@ Configure the following values in your `.env` file:
 
 ```bash
 # Adjust permissions for user 1000:1000
-sudo chown -R 1000:1000 emby homeassistant mosquitto zigbee2mqtt n8n
+sudo chown -R 1000:1000 emby homeassistant mosquitto zigbee2mqtt
 
 # Check USB mount point
 ls -la /data/usbshare
@@ -356,16 +356,18 @@ docker compose up -d
 ### Backup
 
 ```bash
-# Backup configurations
+# Backup configurations (n8n data is in Docker volume)
 tar -czf backup-$(date +%Y%m%d).tar.gz \
   emby/ \
   homeassistant/ \
   mosquitto/ \
   zigbee2mqtt/ \
-  n8n/ \
   letsencrypt/ \
   docker-compose.yaml \
   .env
+
+# Backup n8n data volume separately
+docker run --rm -v n8n_data:/data -v $(pwd):/backup alpine tar czf /backup/n8n-data-$(date +%Y%m%d).tar.gz -C /data .
 ```
 
 ### Logs
