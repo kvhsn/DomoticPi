@@ -1,6 +1,7 @@
 .env
-./emby
-./homeassistant
-./letsencrypt
-./mosquitto
-./zigbee2mqtt
+emby
+homeassistant
+letsencrypt
+mosquitto
+zigbee2mqtt
+n8n_data

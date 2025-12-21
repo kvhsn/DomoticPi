@@ -25,7 +25,8 @@ Internet
 Traefik (${TRAEFIK_IP}) - Reverse Proxy & SSL
     ├── transmission.{DOMAIN} → Transmission (${TRANSMISSION_IP})
     ├── emby.{DOMAIN} → Emby (${EMBY_IP})
-    └── homeassistant.{DOMAIN} → Home Assistant (${HOMEASSISTANT_IP})
+    ├── homeassistant.{DOMAIN} → Home Assistant (${HOMEASSISTANT_IP})
+    └── n8n.{DOMAIN} → n8n (${N8N_IP})
 
 Internal Network (${NETWORK_SUBNET})
     ├── Mosquitto (${MOSQUITTO_IP}) - MQTT Broker
@@ -102,6 +103,23 @@ Internal Network (${NETWORK_SUBNET})
 - **Function**: Bridge between Zigbee devices and MQTT
 - **Hardware**: Zigbee USB dongle shared with Home Assistant
 
+### n8n (Workflow Automation)
+
+- **URL**: `https://n8n.{DOMAIN}`
+- **Internal Port**: 5678
+- **IP**: `${N8N_IP}` (configured in `.env`)
+- **Function**: Self-hosted workflow automation platform
+- **Features**:
+  - Visual workflow editor
+  - 400+ integrations (HTTP, databases, APIs, etc.)
+  - Webhooks support for external triggers
+  - Basic authentication enabled by default
+- **Use cases**:
+  - Home automation workflows
+  - Data synchronization between services
+  - Notifications and alerts
+  - Integration with Home Assistant
+
 ## 🔧 Prerequisites
 
 ### Hardware
@@ -165,12 +183,14 @@ Configure the following values in your `.env` file:
 | `HOMEASSISTANT_IP`        | Home Assistant IP                            | `x.x.x.x`                        |
 | `MOSQUITTO_IP`            | Mosquitto MQTT broker IP                     | `x.x.x.x`                        |
 | `ZIGBEE2MQTT_IP`          | Zigbee2MQTT bridge IP                        | `x.x.x.x`                        |
+| `N8N_IP`                  | n8n automation platform IP                   | `x.x.x.x`                        |
 | `NETWORK_SUBNET`          | Docker network subnet                        | `x.x.x.x/16`                     |
 | **Credentials**           | _Keep these secure_                          |                                  |
 | `TRANSMISSION_USER`       | Username for Transmission access             | `torrent_user`                   |
 | `TRANSMISSION_PASS`       | Password for Transmission access             | `secure_password`                |
 | `SAMBA_USER`              | Username for Samba file sharing              | `share_user`                     |
 | `SAMBA_PASS`              | Password for Samba file sharing              | `secure_password`                |
+| `N8N_ENCRYPTION_KEY`      | Encryption key for credentials (min 32 chars)| `your-32-char-encryption-key`    |
 
 ### 3. Check permissions
 
@@ -216,6 +236,7 @@ EMBY_IP=
 HOMEASSISTANT_IP=
 MOSQUITTO_IP=
 ZIGBEE2MQTT_IP=
+N8N_IP=
 NETWORK_SUBNET=
 
 # Transmission credentials
@@ -225,7 +246,23 @@ TRANSMISSION_PASS=yourPassword
 # Samba credentials
 SAMBA_USER=user
 SAMBA_PASS=yourPassword
+
+# n8n configuration
+N8N_ENCRYPTION_KEY=your-32-character-encryption-key
 ```
+
+### n8n Encryption Key
+
+Generate a secure encryption key for n8n credentials storage using OpenSSL:
+
+```bash
+# Generate a 32-byte base64-encoded encryption key
+openssl rand -base64 32
+```
+
+Copy the output and set it as `N8N_ENCRYPTION_KEY` in your `.env` file.
+
+> **Important**: Keep this key safe! If you lose it, you won't be able to decrypt your stored credentials. Back it up securely.
 
 ### Mosquitto Configuration
 
@@ -266,6 +303,7 @@ advanced:
 - **Transmission**: `https://transmission.yourdomain.com`
 - **Emby**: `https://emby.yourdomain.com`
 - **Home Assistant**: `https://homeassistant.yourdomain.com`
+- **n8n**: `https://n8n.yourdomain.com`
 - **Zigbee2MQTT**: `http://{SERVER_IP}:8080`
 - **Samba**: `\\{SERVER_IP}\raspberrypi`
 
@@ -292,6 +330,17 @@ advanced:
 1. Log in with configured credentials
 2. Configure download folders if necessary
 
+#### n8n
+
+1. Access `https://n8n.yourdomain.com`
+2. On first access, create an owner account (email + password)
+3. Create your first workflow using the visual editor
+4. Useful integrations:
+   - **Home Assistant**: Trigger workflows from HA events
+   - **Webhook**: Receive external triggers
+   - **HTTP Request**: Call external APIs
+   - **MQTT**: Integrate with your Mosquitto broker
+
 ## 🔄 Maintenance
 
 ### Update Services
@@ -307,7 +356,7 @@ docker compose up -d
 ### Backup
 
 ```bash
-# Backup configurations
+# Backup configurations (n8n data is in Docker volume)
 tar -czf backup-$(date +%Y%m%d).tar.gz \
   emby/ \
   homeassistant/ \
@@ -316,6 +365,9 @@ tar -czf backup-$(date +%Y%m%d).tar.gz \
   letsencrypt/ \
   docker-compose.yaml \
   .env
+
+# Backup n8n data volume separately
+docker run --rm -v n8n_data:/data -v $(pwd):/backup alpine tar czf /backup/n8n-data-$(date +%Y%m%d).tar.gz -C /data .
 ```
 
 ### Logs
