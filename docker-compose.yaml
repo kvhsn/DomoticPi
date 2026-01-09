@@ -74,6 +74,7 @@ services:
       - /data/usbshare/Series:/mnt/share1 # Media directory
       - /data/usbshare/Movies:/mnt/share2 # Media directory
       - /data/usbshare/Manga:/mnt/share3 # Media directory
+      - /data/usbshare/downloads/complete:/mnt/share4 # Plugged Media Directory to transmission completed downloads
       - /opt/vc/lib:/opt/vc/lib
     labels:
       - traefik.enable=true
