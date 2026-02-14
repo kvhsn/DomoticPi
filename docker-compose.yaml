@@ -35,10 +35,13 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${TRAEFIK_IP}
+  
   transmission:
     container_name: transmission
     restart: unless-stopped
     image: linuxserver/transmission
+    depends_on:
+      - traefik
     environment:
       - PUID=1000
       - PGID=1000
@@ -65,6 +68,8 @@ services:
     container_name: emby
     restart: unless-stopped
     image: emby/embyserver_arm64v8
+    depends_on:
+      - traefik
     environment:
       - TZ=Europe/Paris
       - PUID=1000
@@ -120,6 +125,9 @@ services:
     restart: unless-stopped
     image: homeassistant/home-assistant:stable
     privileged: true
+    depends_on:
+      - mosquitto
+      - traefik
     environment:
       - TZ=Europe/Paris
     devices:
@@ -146,7 +154,7 @@ services:
     restart: unless-stopped
     image: eclipse-mosquitto:2
     ports:
-      - "1883:1883"
+      - "${MOSQUITTO_PORT}:1883"
       - "9001:9001"
     volumes:
       - ./mosquitto/config:/mosquitto/config
@@ -155,7 +163,26 @@ services:
     networks:
       traefik-net:
         ipv4_address: ${MOSQUITTO_IP}
-
+  
+  govee2mqtt:
+    restart: unless-stopped
+    depends_on:
+      - mosquitto
+    container_name: govee2mqtt
+    image: ghcr.io/wez/govee2mqtt:latest
+    environment:
+      - GOVEE_API_KEY=${GOVEE_API_KEY}
+      - GOVEE_MQTT_HOST=${MOSQUITTO_IP}
+      - GOVEE_MQTT_PORT=${MOSQUITTO_PORT}
+      - GOVEE_MQTT_USER=${GOVEE_MQTT_USER}
+      - GOVEE_MQTT_PASSWORD=${GOVEE_MQTT_PASSWORD}
+      - GOVEE_TEMPERATURE_SCALE=${GOVEE_TEMPERATURE_SCALE}
+      - RUST_LOG_STYLE=${RUST_LOG_STYLE}
+      - TZ=${GENERIC_TIMEZONE}
+    networks:
+      traefik-net:
+        ipv4_address: ${GOVEE2MQTT_IP}
+  
   zigbee2mqtt:
     restart: unless-stopped
     depends_on:
@@ -180,6 +207,8 @@ services:
     container_name: n8n
     restart: unless-stopped
     image: docker.n8n.io/n8nio/n8n
+    depends_on:
+      - traefik
     environment:
       - TZ=${GENERIC_TIMEZONE}
       - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
